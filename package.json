@@ -1,0 +1,27 @@
+{
+  "name": "houses-scraper",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "MIT",
+  "scripts": {
+    "start": "tsc && node dist/index.js",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "code:clean": "yarn code:lint && yarn code:format",
+    "code:lint": "eslint --ext .js,.jsx,.ts,.tsx \"src/\" --fix",
+    "code:format": "prettier './src/**/**.{js,jsx,ts,tsx}' --write",
+    "code:check:rules": "eslint --print-config .eslintrc.js | eslint-config-prettier-check"
+  },
+  "dependencies": {
+    "@sentry/node": "5.10.1",
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^12.12.14",
+    "@types/spotify-web-api-node": "^4.0.1",
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.1",
+    "ts-node": "^8.5.4",
+    "typescript": "^3.7.3"
+  },
+  "devDependencies": {
+    "poetic": "1.1.0"
+  }
+}
