@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import got from "got";
+import axios from 'axios';
 import { NeigborhoodUrl } from "./portal-inmobiliario.d";
 
 // TODO: transform in env variable
@@ -17,11 +17,11 @@ const urlMap = {
 const getNeighborhoodUrl = async (
   neighborhoodId: string
 ): Promise<NeigborhoodUrl[]> => {
-  const { body: url } = await got(
+  const { data: url } = await axios.get(
     `${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`
   );
 
-  return JSON.parse(url);
+  return url;
 };
 
 const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]) => {
@@ -31,18 +31,34 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]) => {
 };
 
 const scrapNeighborhood = async (neighborhoodSlug: string) => {
+  // TODO: Change this parameters to optiosn setted outside of this function.
   const url = `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
+  const browser = await puppeteer.launch();
   
+  try {
+    const page = await browser.newPage();
+
+    await page.goto(url);
+    await page.waitForSelector('#searchResults', {visible: true, timeout: 5000 });
+
+    const rows = await page.$$('li.results-item');
+
+    await browser.close();
+  } catch (error) {
+    console.log({error});
+    
+    await browser.close();
+  }
+
   console.log(url);
 };
 
 export default async () => {
   try {
     const url = `${baseUrl}${urlMap.searchLocations}${searchTerm}`;
-    const { body } = await got(url);
+    const { data } = await axios.get(url);
 
-    const formattedBody = JSON.parse(body);
-    const extractedNeighborhoods = formattedBody.filter(
+    const extractedNeighborhoods = data.filter(
       data => data.level === "neighborhood"
     );
 
@@ -54,9 +70,12 @@ export default async () => {
 
     const neighborhoodSlugs = getNeighborhoodsSlug(neighborhoodURLs);
 
-    await Promise.all(
-      neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
-    );
+    // await Promise.all(
+    //   neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
+    // );
+
+    // TODO: Test purpose
+    scrapNeighborhood(neighborhoodSlugs[0]);
   } catch (error) {
     console.log({ error });
   }
