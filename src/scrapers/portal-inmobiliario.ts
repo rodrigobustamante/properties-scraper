@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import axios from 'axios';
+import fs from 'fs';
 import { NeigborhoodUrl } from "./portal-inmobiliario.d";
 import { extractDataFromInnerText } from "../utils/helpers";
 
@@ -44,6 +45,8 @@ const scrapNeighborhood = async (neighborhoodSlug: string) => {
 
     const rows = await page.$$('.item__info-container');
 
+    const neighborhoodInfo = [];
+
     for (const row of rows) {
       const rowLinkElement = await row.$('a');
       const href = await page.evaluate(el => el.href, rowLinkElement);
@@ -54,10 +57,12 @@ const scrapNeighborhood = async (neighborhoodSlug: string) => {
         href
       };
 
-      console.log(rowInfo);
+      neighborhoodInfo.push(rowInfo);
     }
 
     await browser.close();
+
+    return neighborhoodInfo;
   } catch (error) {
     console.log({error});
     
@@ -84,11 +89,12 @@ export default async () => {
 
     const neighborhoodSlugs = getNeighborhoodsSlug(neighborhoodURLs);
 
-    await Promise.all(
+    const scraperInformation = await Promise.all(
       neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
     );
 
-    // TODO: Test purpose
+    const scraperInfoInString = JSON.stringify(scraperInformation);
+    fs.writeFileSync(`./output/${searchTerm}.json`, scraperInfoInString);
   } catch (error) {
     console.log({ error });
   }
