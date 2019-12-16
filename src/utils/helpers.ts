@@ -4,9 +4,9 @@ export const extractDataFromInnerText = (innerText: string): object => {
   
   const data = {
     value: innerTextSplitted[0],
-    size: specs[0].trim(),
-    rooms: specs[1].trim(),
-    bathrooms: specs[2].trim(),
+    size: specs[0] && specs[0].trim(),
+    rooms: specs[1] && specs[1].trim(),
+    bathrooms: specs[2] && specs[2].trim(),
     type: innerTextSplitted[2],
     description: innerTextSplitted[3],
   }
