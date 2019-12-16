@@ -1,4 +1,4 @@
-export const extractDataFromInnerText = (innerText: string): object => {
+const extractDataFromInnerText = (innerText: string): object => {
   const innerTextSplitted = innerText.replace(/(\n)\1+/g, '$1').split('\n');
   const specs = innerTextSplitted[1].split('|');
   
@@ -13,3 +13,5 @@ export const extractDataFromInnerText = (innerText: string): object => {
 
   return data;
 }
+
+export default extractDataFromInnerText;
