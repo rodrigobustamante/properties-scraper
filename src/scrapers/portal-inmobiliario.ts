@@ -62,7 +62,7 @@ const scrapNeighborhood = async (neighborhoodSlug: string) => {
 
     await browser.close();
 
-    return neighborhoodInfo;
+    return { [neighborhoodSlug]: neighborhoodInfo };
   } catch (error) {
     console.log({error});
     
