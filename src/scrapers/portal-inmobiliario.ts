@@ -68,12 +68,11 @@ const scrapNeighborhood = async (neighborhoodSlug: string) => {
     
     await browser.close();
   }
-
-  console.log(url);
 };
 
 export default async () => {
   try {
+    console.log(`Scraping info for ${searchTerm}`);
     const url = `${baseUrl}${urlMap.searchLocations}${searchTerm}`;
     const { data } = await axios.get(url);
 
@@ -95,6 +94,8 @@ export default async () => {
 
     const scraperInfoInString = JSON.stringify(scraperInformation);
     fs.writeFileSync(`./output/${searchTerm}.json`, scraperInfoInString);
+
+    console.log(`Ended!`);
   } catch (error) {
     console.log({ error });
   }
