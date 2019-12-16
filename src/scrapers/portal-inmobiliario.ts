@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import axios from 'axios';
 import { NeigborhoodUrl } from "./portal-inmobiliario.d";
+import { extractDataFromInnerText } from "../utils/helpers";
 
 // TODO: transform in env variable
 const baseUrl = "https://www.portalinmobiliario.com";
@@ -41,7 +42,20 @@ const scrapNeighborhood = async (neighborhoodSlug: string) => {
     await page.goto(url);
     await page.waitForSelector('#searchResults', {visible: true, timeout: 5000 });
 
-    const rows = await page.$$('li.results-item');
+    const rows = await page.$$('.item__info-container');
+
+    for (const row of rows) {
+      const rowLinkElement = await row.$('a');
+      const href = await page.evaluate(el => el.href, rowLinkElement);
+      const innerText = await page.evaluate(el => el.innerText, row);
+
+      const rowInfo = {
+        ...extractDataFromInnerText(innerText), 
+        href
+      };
+
+      console.log(rowInfo);
+    }
 
     await browser.close();
   } catch (error) {
@@ -70,12 +84,11 @@ export default async () => {
 
     const neighborhoodSlugs = getNeighborhoodsSlug(neighborhoodURLs);
 
-    // await Promise.all(
-    //   neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
-    // );
+    await Promise.all(
+      neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
+    );
 
     // TODO: Test purpose
-    scrapNeighborhood(neighborhoodSlugs[0]);
   } catch (error) {
     console.log({ error });
   }
