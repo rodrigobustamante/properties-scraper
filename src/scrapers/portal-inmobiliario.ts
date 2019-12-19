@@ -1,8 +1,10 @@
 import puppeteer from 'puppeteer';
 import axios from 'axios';
 import fs from 'fs';
+import crawler from '../services/crawler';
 import { NeigborhoodUrl, NeigborhoodInfo } from './portal-inmobiliario.d';
 import extractDataFromInnerText from '../utils/helpers';
+import findElementByClass from '../utils/crawler';
 
 // TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
@@ -32,48 +34,53 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
   );
 };
 
-const scrapNeighborhood = async (neighborhoodSlug: string): Promise<NeigborhoodInfo> => {
+const scrapNeighborhood = async (neighborhoodSlug: string): Promise<null> => {
   // TODO: Change this parameters to optiosn setted outside of this function.
   const url = `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
-  const browser = await puppeteer.launch();
-  
-  try {
-    const page = await browser.newPage();
+  await crawler.queue(url);
 
-    await page.goto(url);
-    await page.waitForSelector('#searchResults', {visible: true, timeout: 5000 });
+  const elements = await findElementByClass(url, '.item__info-container');
 
-    const rows = await page.$$('.item__info-container');
+  return null;
+  // const browser = await puppeteer.launch();
 
-    const neighborhoodData = [];
-    
-    /* eslint-disable no-await-in-loop */
-    /* eslint-disable no-restricted-syntax */
-    // TODO: Verify if possible to change this fragment of code to Promise.all, instead of use await inside a loop.
-    for (const row of rows) {
-      const rowLinkElement = await row.$('a');
-      const href = await page.evaluate((el: { href: string; }) => el.href, rowLinkElement);
-      const innerText = await page.evaluate((el: { innerText: string; }) => el.innerText, row);
+  // try {
+  //   const page = await browser.newPage();
 
-      const rowInfo = {
-        ...extractDataFromInnerText(innerText), 
-        href
-      };
+  //   await page.goto(url);
+  //   await page.waitForSelector('#searchResults', {visible: true, timeout: 5000 });
 
-      neighborhoodData.push(rowInfo);
-    }
+  //   const rows = await page.$$('.item__info-container');
 
-    await browser.close();
+  //   const neighborhoodData = [];
 
-    return {
-      neighborhoodSlug,
-      neighborhoodData,
-    };
-  } catch (error) {
-    await browser.close();
-    
-    return null;
-  }
+  //   /* eslint-disable no-await-in-loop */
+  //   /* eslint-disable no-restricted-syntax */
+  //   // TODO: Verify if possible to change this fragment of code to Promise.all, instead of use await inside a loop.
+  //   for (const row of rows) {
+  //     const rowLinkElement = await row.$('a');
+  //     const href = await page.evaluate((el: { href: string; }) => el.href, rowLinkElement);
+  //     const innerText = await page.evaluate((el: { innerText: string; }) => el.innerText, row);
+
+  //     const rowInfo = {
+  //       ...extractDataFromInnerText(innerText),
+  //       href
+  //     };
+
+  //     neighborhoodData.push(rowInfo);
+  //   }
+
+  //   await browser.close();
+
+  //   return {
+  //     neighborhoodSlug,
+  //     neighborhoodData,
+  //   };
+  // } catch (error) {
+  //   await browser.close();
+
+  //   return null;
+  // }
 };
 
 export default async (): Promise<void> => {
