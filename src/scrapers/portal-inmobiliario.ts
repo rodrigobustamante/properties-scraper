@@ -1,19 +1,19 @@
-import puppeteer from "puppeteer";
+import puppeteer from 'puppeteer';
 import axios from 'axios';
 import fs from 'fs';
-import { NeigborhoodUrl } from "./portal-inmobiliario.d";
-import { extractDataFromInnerText } from "../utils/helpers";
+import { NeigborhoodUrl, NeigborhoodInfo } from './portal-inmobiliario.d';
+import extractDataFromInnerText from '../utils/helpers';
 
 // TODO: transform in env variable
-const baseUrl = "https://www.portalinmobiliario.com";
+const baseUrl = 'https://www.portalinmobiliario.com';
 // searchTerm should be defined on index file??
-const searchTerm = "Providencia";
+const searchTerm = 'Providencia';
 
 const urlMap = {
-  searchLocations: "/api/search-faceted/MLC/locations?query=",
+  searchLocations: '/api/search-faceted/MLC/locations?query=',
   // TODO: Pass values to operation_id and only_news options.
   getLocationUrl:
-    "/api/search-faceted/MLC/search-real-estate-url?operation_id=arriendo_departamento&only_news=false&location_id="
+    '/api/search-faceted/MLC/search-real-estate-url?operation_id=arriendo_departamento&only_news=false&location_id='
 };
 
 const getNeighborhoodUrl = async (
@@ -26,13 +26,13 @@ const getNeighborhoodUrl = async (
   return url;
 };
 
-const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]) => {
+const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
   return neigborhoodsUrl.map(({ url }) =>
-    url.substring(url.lastIndexOf("/") + 1)
+    url.substring(url.lastIndexOf('/') + 1)
   );
 };
 
-const scrapNeighborhood = async (neighborhoodSlug: string) => {
+const scrapNeighborhood = async (neighborhoodSlug: string): Promise<NeigborhoodInfo> => {
   // TODO: Change this parameters to optiosn setted outside of this function.
   const url = `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
   const browser = await puppeteer.launch();
@@ -45,43 +45,49 @@ const scrapNeighborhood = async (neighborhoodSlug: string) => {
 
     const rows = await page.$$('.item__info-container');
 
-    const neighborhoodInfo = [];
-
+    const neighborhoodData = [];
+    
+    /* eslint-disable no-await-in-loop */
+    /* eslint-disable no-restricted-syntax */
+    // TODO: Verify if possible to change this fragment of code to Promise.all, instead of use await inside a loop.
     for (const row of rows) {
       const rowLinkElement = await row.$('a');
-      const href = await page.evaluate(el => el.href, rowLinkElement);
-      const innerText = await page.evaluate(el => el.innerText, row);
+      const href = await page.evaluate((el: { href: string; }) => el.href, rowLinkElement);
+      const innerText = await page.evaluate((el: { innerText: string; }) => el.innerText, row);
 
       const rowInfo = {
         ...extractDataFromInnerText(innerText), 
         href
       };
 
-      neighborhoodInfo.push(rowInfo);
+      neighborhoodData.push(rowInfo);
     }
 
     await browser.close();
 
-    return { [neighborhoodSlug]: neighborhoodInfo };
+    return {
+      neighborhoodSlug,
+      neighborhoodData,
+    };
   } catch (error) {
-    console.log({error});
-    
     await browser.close();
+    
+    return null;
   }
 };
 
-export default async () => {
+export default async (): Promise<void> => {
   try {
     console.log(`Scraping info for ${searchTerm}`);
     const url = `${baseUrl}${urlMap.searchLocations}${searchTerm}`;
     const { data } = await axios.get(url);
 
     const extractedNeighborhoods = data.filter(
-      data => data.level === "neighborhood"
+      (d: { level: string; }) => d.level === 'neighborhood'
     );
 
     const neighborhoodURLs = await Promise.all(
-      extractedNeighborhoods.map(neighborhood =>
+      extractedNeighborhoods.map((neighborhood: { id: string; }) =>
         getNeighborhoodUrl(neighborhood.id)
       )
     );
