@@ -1,7 +1,7 @@
 import axios from 'axios';
 import fs from 'fs';
 import { NeigborhoodUrl, NeigborhoodInfo } from './portal-inmobiliario.d';
-import extractDataFromInnerText from '../utils/helpers';
+import extractSpecs from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
 
 // TODO: transform in env variable
@@ -44,7 +44,7 @@ const scrapNeighborhood = async (neighborhoodSlug: string): Promise<NeigborhoodI
     const priceFraction = findDOMElement('.price__fraction', element).text();
     const itemAttrs = findDOMElement('.item__attrs', element).text();
     const { href: link } = findDOMElement('.item__info-title-link', element).attr();
-    const { size, rooms, bathrooms } = extractDataFromInnerText(itemAttrs);
+    const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
 
     return {
       size,
