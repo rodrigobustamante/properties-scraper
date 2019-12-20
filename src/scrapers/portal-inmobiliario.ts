@@ -1,6 +1,6 @@
 import axios from 'axios';
 import fs from 'fs';
-import { NeigborhoodUrl, NeigborhoodInfo } from './portal-inmobiliario.d';
+import { NeigborhoodUrl, NeigborhoodInfo, Property } from './portal-inmobiliario.d';
 import extractSpecs from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
 
@@ -32,14 +32,14 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
   );
 };
 
-const scrapNeighborhood = async (neighborhoodSlug: string): Promise<NeigborhoodInfo> => {
-  // TODO: Change this parameters to optiosn setted outside of this function.
-  const url = `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
+const scrapNeighborhood = async (neighborhoodSlug: string, nextPage?: string, prevData?: Property[]): Promise<NeigborhoodInfo> => {
+  // TODO: Change this parameters to options setted outside of this function.
+  const url = nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
   const { data: body } = await axios.get(url);
 
   const elements = await findDOMElement('.item__info-container', body).toArray();
 
-  const neighborhoodData = elements.map(element => {
+  const neighborhoodData: Property[] = elements.map(element => {
     const priceSymbol = findDOMElement('.price__symbol', element).text();
     const priceFraction = findDOMElement('.price__fraction', element).text();
     const itemAttrs = findDOMElement('.item__attrs', element).text();
@@ -58,9 +58,16 @@ const scrapNeighborhood = async (neighborhoodSlug: string): Promise<NeigborhoodI
     }
   });
 
-  return {
-    neighborhoodSlug,
-    neighborhoodData,
+  try {
+    const { href } = await findDOMElement('.prefetch', body).attr();
+    console.log({href});
+
+    return null;
+  } catch (error) {
+    return {
+      neighborhoodSlug,
+      neighborhoodData,
+    }
   }
 };
 
