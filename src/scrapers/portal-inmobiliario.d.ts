@@ -14,10 +14,12 @@ export interface NeigborhoodInfo {
 }
 
 export interface Property {
-  value: string,
+  formattedPrice: string,
+  priceCurrency: string,
+  bathrooms: string,
+  price: number,
   size: string,
   rooms: string,
-  bathrooms: string,
-  type: string,
   description: string,
+  link?: string,
 }

@@ -13,14 +13,13 @@
   },
   "dependencies": {
     "@sentry/node": "5.10.1",
+    "@types/cheerio": "^0.22.15",
     "@types/dotenv": "^8.2.0",
     "@types/node": "^12.12.14",
-    "@types/spotify-web-api-node": "^4.0.1",
     "axios": "^0.19.0",
-    "crawler": "^1.2.1",
+    "cheerio": "^1.0.0-rc.3",
     "dotenv": "^8.2.0",
     "nodemon": "^2.0.1",
-    "puppeteer": "^2.0.0",
     "ts-node": "^8.5.4",
     "typescript": "^3.7.3"
   },

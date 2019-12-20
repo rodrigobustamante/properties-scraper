@@ -1,10 +1,8 @@
-import puppeteer from 'puppeteer';
 import axios from 'axios';
 import fs from 'fs';
-import crawler from '../services/crawler';
 import { NeigborhoodUrl, NeigborhoodInfo } from './portal-inmobiliario.d';
 import extractDataFromInnerText from '../utils/helpers';
-import findElementByClass from '../utils/crawler';
+import findDOMElement from '../utils/cheerio';
 
 // TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
@@ -34,53 +32,36 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
   );
 };
 
-const scrapNeighborhood = async (neighborhoodSlug: string): Promise<null> => {
+const scrapNeighborhood = async (neighborhoodSlug: string): Promise<NeigborhoodInfo> => {
   // TODO: Change this parameters to optiosn setted outside of this function.
   const url = `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
-  await crawler.queue(url);
+  const { data: body } = await axios.get(url);
 
-  const elements = await findElementByClass(url, '.item__info-container');
+  const elements = await findDOMElement('.item__info-container', body).toArray();
 
-  return null;
-  // const browser = await puppeteer.launch();
+  const neighborhoodData = elements.map(element => {
+    const priceSymbol = findDOMElement('.price__symbol', element).text();
+    const priceFraction = findDOMElement('.price__fraction', element).text();
+    const itemAttrs = findDOMElement('.item__attrs', element).text();
+    const { href: link } = findDOMElement('.item__info-title-link', element).attr();
+    const { size, rooms, bathrooms } = extractDataFromInnerText(itemAttrs);
 
-  // try {
-  //   const page = await browser.newPage();
+    return {
+      size,
+      rooms,
+      bathrooms,
+      price: Number(priceFraction.split('.').join('')),
+      priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
+      formattedPrice: `${priceSymbol} ${priceFraction}`,
+      description: findDOMElement('.main-title', element).text(),
+      link,
+    }
+  });
 
-  //   await page.goto(url);
-  //   await page.waitForSelector('#searchResults', {visible: true, timeout: 5000 });
-
-  //   const rows = await page.$$('.item__info-container');
-
-  //   const neighborhoodData = [];
-
-  //   /* eslint-disable no-await-in-loop */
-  //   /* eslint-disable no-restricted-syntax */
-  //   // TODO: Verify if possible to change this fragment of code to Promise.all, instead of use await inside a loop.
-  //   for (const row of rows) {
-  //     const rowLinkElement = await row.$('a');
-  //     const href = await page.evaluate((el: { href: string; }) => el.href, rowLinkElement);
-  //     const innerText = await page.evaluate((el: { innerText: string; }) => el.innerText, row);
-
-  //     const rowInfo = {
-  //       ...extractDataFromInnerText(innerText),
-  //       href
-  //     };
-
-  //     neighborhoodData.push(rowInfo);
-  //   }
-
-  //   await browser.close();
-
-  //   return {
-  //     neighborhoodSlug,
-  //     neighborhoodData,
-  //   };
-  // } catch (error) {
-  //   await browser.close();
-
-  //   return null;
-  // }
+  return {
+    neighborhoodSlug,
+    neighborhoodData,
+  }
 };
 
 export default async (): Promise<void> => {

@@ -1,17 +1,11 @@
-const extractDataFromInnerText = (innerText: string): object => {
-  const innerTextSplitted = innerText.replace(/(\n)\1+/g, '$1').split('\n');
-  const specs = innerTextSplitted[1].split('|');
-  
-  const data = {
-    value: innerTextSplitted[0],
+const extractSpecs = (itemAttrs: string): any => {
+  const specs = itemAttrs.split('|');
+
+  return {
     size: specs[0] && specs[0].trim(),
     rooms: specs[1] && specs[1].trim(),
     bathrooms: specs[2] && specs[2].trim(),
-    type: innerTextSplitted[2],
-    description: innerTextSplitted[3],
   }
-
-  return data;
 }
 
-export default extractDataFromInnerText;
+export default extractSpecs;
