@@ -1,6 +1,6 @@
 import got from 'got';
 import fs from 'fs';
-import { NeigborhoodUrl, NeigborhoodInfo, Property } from './portal-inmobiliario.d';
+import { NeigborhoodUrl, NeigborhoodInfo, Property } from '../interfaces/portal-inmobiliario';
 import extractSpecs from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
 

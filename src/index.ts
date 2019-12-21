@@ -1,4 +1,4 @@
-import portalInmobiliario from './scrapers/portal-inmobiliario';
+import portalInmobiliario from './spiders/portal-inmobiliario';
 
 (async (): Promise <void> => {
   await portalInmobiliario();

@@ -1,4 +1,6 @@
-const extractSpecs = (itemAttrs: string): any => {
+import { PropertieSpecs } from '../interfaces/helpers';
+
+const extractSpecs = (itemAttrs: string): PropertieSpecs => {
   const specs = itemAttrs.split('|');
 
   return {

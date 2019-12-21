@@ -1,5 +1,5 @@
 export interface PropertieSpecs {
-  rooms: number,
-  bathrooms: number,
+  rooms: string,
+  bathrooms: string,
   size: string,
 }
