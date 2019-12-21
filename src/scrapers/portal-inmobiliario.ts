@@ -1,4 +1,4 @@
-import axios from 'axios';
+import got from 'got';
 import fs from 'fs';
 import { NeigborhoodUrl, NeigborhoodInfo, Property } from './portal-inmobiliario.d';
 import extractSpecs from '../utils/helpers';
@@ -19,8 +19,9 @@ const urlMap = {
 const getNeighborhoodUrl = async (
   neighborhoodId: string
 ): Promise<NeigborhoodUrl[]> => {
-  const { data: url } = await axios.get(
-    `${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`
+  const { body: url } = await got.get(
+    `${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`,
+    { responseType: 'json' }
   );
 
   return url;
@@ -37,7 +38,7 @@ const scrapNeighborhood = async (
   nextPage?: string): Promise<NeigborhoodInfo> => {
   // TODO: Change this parameters to options setted outside of this function.
   const url = nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
-  const { data: body } = await axios.get(url);
+  const { body } = await got.get(url);
 
   const elements = await findDOMElement('.item__info-container', body).toArray();
 
@@ -81,9 +82,9 @@ export default async (): Promise<void> => {
     console.log(`Scraping info for ${searchTerm}`);
 
     const url = `${baseUrl}${urlMap.searchLocations}${searchTerm}`;
-    const { data } = await axios.get(url);
+    const { body } = await got.get(url, { responseType: 'json' });
 
-    const extractedNeighborhoods = data.filter(
+    const extractedNeighborhoods = body.filter(
       (d: { level: string; }) => d.level === 'neighborhood'
     );
 
