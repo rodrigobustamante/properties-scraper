@@ -32,7 +32,9 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
   );
 };
 
-const scrapNeighborhood = async (neighborhoodSlug: string, nextPage?: string, prevData?: Property[]): Promise<NeigborhoodInfo> => {
+const scrapNeighborhood = async (
+  neighborhoodSlug: string,
+  nextPage?: string): Promise<NeigborhoodInfo> => {
   // TODO: Change this parameters to options setted outside of this function.
   const url = nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
   const { data: body } = await axios.get(url);
@@ -60,9 +62,12 @@ const scrapNeighborhood = async (neighborhoodSlug: string, nextPage?: string, pr
 
   try {
     const { href } = await findDOMElement('.prefetch', body).attr();
-    console.log({href});
+    const { neighborhoodData: nextPageData } = await scrapNeighborhood(neighborhoodSlug, href);
 
-    return null;
+    return {
+      neighborhoodSlug,
+      neighborhoodData: [...neighborhoodData, ...nextPageData],
+    }
   } catch (error) {
     return {
       neighborhoodSlug,
@@ -74,6 +79,7 @@ const scrapNeighborhood = async (neighborhoodSlug: string, nextPage?: string, pr
 export default async (): Promise<void> => {
   try {
     console.log(`Scraping info for ${searchTerm}`);
+
     const url = `${baseUrl}${urlMap.searchLocations}${searchTerm}`;
     const { data } = await axios.get(url);
 
@@ -96,7 +102,7 @@ export default async (): Promise<void> => {
     const scraperInfoInString = JSON.stringify(scraperInformation);
     fs.writeFileSync(`./output/${searchTerm}.json`, scraperInfoInString);
 
-    console.log(`Ended!`);
+    console.log(`Ended the scraping for ${searchTerm}!`);
   } catch (error) {
     console.log({ error });
   }
