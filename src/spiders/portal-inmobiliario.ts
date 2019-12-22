@@ -121,14 +121,12 @@ export default async (): Promise<void> => {
       ));
 
       const propertiesIdsFiltered = propertiesIds.filter(id => id !== null);
-      const neigborhoodId = await createNeigborhood(slug, propertiesIdsFiltered);
+      const neigborhoodId = await saveNeighborhoodInfo(slug, propertiesIdsFiltered);
 
       return neigborhoodId;
     }));
 
-    const communeId = await saveCommuneInfo(searchTerm, neigborhoodIds);
-
-    console.log({communeId});
+    await saveCommuneInfo(searchTerm, neigborhoodIds);
     console.log(`Ended the scraping for ${searchTerm}!`);
   } catch (error) {
     console.log({ error });
