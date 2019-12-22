@@ -3,23 +3,20 @@ import NeigborhoodModel from '../models/neigborhood';
 import PropertyModel from '../models/property';
 import { Property, NeigborhoodInfo } from '../interfaces/portal-inmobiliario';
 
-export const createCommune = async (name: string, neigborhoods: any): Promise<void> => {
+export const createCommune = async (name: string, neigborhoods: string[]): Promise<string> => {
   try {
-    CommuneModel.create({ name, neigborhoods: ['hola', 'hola'] }, (err, commune) => {
-      if (err) throw new Error(err);
+    const newCommune = new CommuneModel({name, neigborhoods});
+    await newCommune.save();
 
-      return console.log({commune});
-
-    });
-
+    return newCommune.id;
   } catch (error) {
     throw new Error(error.message)
   }
 }
 
-export const createNeigborhood = async (neigborhood: any): Promise<void> => {
+export const createNeigborhood = async (slug: string, properties: string[]): Promise<string> => {
   try {
-    const newNeigborhood = new NeigborhoodModel(neigborhood);
+    const newNeigborhood = new NeigborhoodModel({slug, properties});
     await newNeigborhood.save();
 
     return newNeigborhood.id;
@@ -29,7 +26,7 @@ export const createNeigborhood = async (neigborhood: any): Promise<void> => {
 }
 
 
-export const createProperty = async (property: Property): Promise<void> => {
+export const createProperty = async (property: Property): Promise<string> => {
   try {
     const newProperty = new PropertyModel(property);
     await newProperty.save();

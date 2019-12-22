@@ -3,7 +3,7 @@ import fs from 'fs';
 import { NeigborhoodUrl, NeigborhoodInfo, Property } from '../interfaces/portal-inmobiliario';
 import extractSpecs from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
-import { createProperty, createNeigborhood } from '../utils/mongo';
+import { createProperty, createNeigborhood, createCommune } from '../utils/mongo';
 
 // TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
@@ -78,6 +78,18 @@ const scrapNeighborhood = async (
   }
 };
 
+const savePropertyInfo = (property: Property): Promise<string> => {
+  return createProperty(property);
+}
+
+const saveNeighborhoodInfo = (slug: string, propertiesIds: string[]): Promise<string> => {
+  return createNeigborhood(slug, propertiesIds);
+}
+
+const saveCommuneInfo = (name: string, neighborhoodsIds: string[]): Promise<string> => {
+  return createCommune(name, neighborhoodsIds);
+}
+
 export default async (): Promise<void> => {
   try {
     console.log(`Scraping info for ${searchTerm}`);
@@ -101,18 +113,21 @@ export default async (): Promise<void> => {
       neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
     );
 
-    const neigborhoodIds = await scraperInformation.map(async info => {
+    const neigborhoodIds = await Promise.all(scraperInformation.map(async info => {
       const { slug, properties } = info;
+
       const propertiesIds = await Promise.all(properties.map(property =>
-        createProperty(property),
+        savePropertyInfo(property),
       ));
 
-      const neigborhoodId = await createNeigborhood({ slug, properties: propertiesIds });
+      const neigborhoodId = await createNeigborhood(slug, propertiesIds);
 
       return neigborhoodId;
-    });
+    }));
 
-    console.log({neigborhoodIds});
+    const communeId = await saveCommuneInfo(searchTerm, neigborhoodIds);
+
+    console.log({communeId});
     console.log(`Ended the scraping for ${searchTerm}!`);
   } catch (error) {
     console.log({ error });
