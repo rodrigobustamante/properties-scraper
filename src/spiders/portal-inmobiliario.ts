@@ -58,7 +58,7 @@ const scrapNeighborhood = async (
       priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
       formattedPrice: `${priceSymbol} ${priceFraction}`,
       description: findDOMElement('.main-title', element).text(),
-      link,
+      link: link.split('#')[0],
     }
   });
 
@@ -120,7 +120,8 @@ export default async (): Promise<void> => {
         savePropertyInfo(property),
       ));
 
-      const neigborhoodId = await createNeigborhood(slug, propertiesIds);
+      const propertiesIdsFiltered = propertiesIds.filter(id => id !== null);
+      const neigborhoodId = await createNeigborhood(slug, propertiesIdsFiltered);
 
       return neigborhoodId;
     }));
