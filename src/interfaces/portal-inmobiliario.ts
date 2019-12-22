@@ -9,8 +9,8 @@ export interface NeigborhoodUrl {
 }
 
 export interface NeigborhoodInfo {
-  neighborhoodSlug: string,
-  neighborhoodData: Property[]
+  slug: string,
+  properties: Property[]
 }
 
 export interface Property {

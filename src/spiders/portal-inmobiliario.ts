@@ -3,6 +3,7 @@ import fs from 'fs';
 import { NeigborhoodUrl, NeigborhoodInfo, Property } from '../interfaces/portal-inmobiliario';
 import extractSpecs from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
+import { createProperty, createNeigborhood } from '../utils/mongo';
 
 // TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
@@ -34,15 +35,15 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
 };
 
 const scrapNeighborhood = async (
-  neighborhoodSlug: string,
+  slug: string,
   nextPage?: string): Promise<NeigborhoodInfo> => {
   // TODO: Change this parameters to options setted outside of this function.
-  const url = nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${neighborhoodSlug}`;
+  const url = nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${slug}`;
   const { body } = await got.get(url);
 
   const elements = await findDOMElement('.item__info-container', body).toArray();
 
-  const neighborhoodData: Property[] = elements.map(element => {
+  const properties: Property[] = elements.map(element => {
     const priceSymbol = findDOMElement('.price__symbol', element).text();
     const priceFraction = findDOMElement('.price__fraction', element).text();
     const itemAttrs = findDOMElement('.item__attrs', element).text();
@@ -63,16 +64,16 @@ const scrapNeighborhood = async (
 
   try {
     const { href } = await findDOMElement('.prefetch', body).attr();
-    const { neighborhoodData: nextPageData } = await scrapNeighborhood(neighborhoodSlug, href);
+    const { properties: nextPageData } = await scrapNeighborhood(slug, href);
 
     return {
-      neighborhoodSlug,
-      neighborhoodData: [...neighborhoodData, ...nextPageData],
+      slug,
+      properties: [...properties, ...nextPageData],
     }
   } catch (error) {
     return {
-      neighborhoodSlug,
-      neighborhoodData,
+      slug,
+      properties,
     }
   }
 };
@@ -100,9 +101,18 @@ export default async (): Promise<void> => {
       neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
     );
 
-    const scraperInfoInString = JSON.stringify(scraperInformation);
-    fs.writeFileSync(`./output/${searchTerm}.json`, scraperInfoInString);
+    const neigborhoodIds = await scraperInformation.map(async info => {
+      const { slug, properties } = info;
+      const propertiesIds = await Promise.all(properties.map(property =>
+        createProperty(property),
+      ));
 
+      const neigborhoodId = await createNeigborhood({ slug, properties: propertiesIds });
+
+      return neigborhoodId;
+    });
+
+    console.log({neigborhoodIds});
     console.log(`Ended the scraping for ${searchTerm}!`);
   } catch (error) {
     console.log({ error });
