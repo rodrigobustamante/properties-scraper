@@ -51,7 +51,7 @@ const scrapNeighborhood = async (
       size,
       rooms,
       bathrooms,
-      price: Number(priceFraction.split('.').join('')),
+      price: Number(priceFraction.split('.').join('').replace(',', '.')),
       priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
       formattedPrice: `${priceSymbol} ${priceFraction}`,
       description: findDOMElement('.main-title', element).text(),
