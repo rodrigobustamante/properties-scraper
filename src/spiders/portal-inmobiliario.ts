@@ -1,15 +1,12 @@
 import got from 'got';
-import fs from 'fs';
 import { NeigborhoodUrl, NeigborhoodInfo, Property } from '../interfaces/portal-inmobiliario';
-import extractSpecs from '../utils/helpers';
+import { extractSpecs } from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
 import { createProperty, createNeigborhood, createCommune } from '../utils/mongo';
 
 // TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
 // searchTerm should be defined on index file??
-const searchTerm = 'Providencia';
-
 const urlMap = {
   searchLocations: '/api/search-faceted/MLC/locations?query=',
   // TODO: Pass values to operation_id and only_news options.
@@ -90,11 +87,12 @@ const saveCommuneInfo = (name: string, neighborhoodsIds: string[]): Promise<stri
   return createCommune(name, neighborhoodsIds);
 }
 
-export default async (): Promise<void> => {
+export default async (commune: string): Promise<void> => {
   try {
-    console.log(`Scraping info for ${searchTerm}`);
+    console.log(`Scraping info for ${commune}`);
 
-    const url = `${baseUrl}${urlMap.searchLocations}${searchTerm}`;
+    const url = `${baseUrl}${urlMap.searchLocations}${encodeURI(commune)}`;
+
     const { body } = await got.get(url, { responseType: 'json' });
 
     const extractedNeighborhoods = body.filter(
@@ -120,14 +118,14 @@ export default async (): Promise<void> => {
         savePropertyInfo(property),
       ));
 
-      const propertiesIdsFiltered = propertiesIds.filter(id => id !== null);
+      const propertiesIdsFiltered = propertiesIds.filter(id => !!id);
       const neigborhoodId = await saveNeighborhoodInfo(slug, propertiesIdsFiltered);
 
       return neigborhoodId;
     }));
 
-    await saveCommuneInfo(searchTerm, neigborhoodIds);
-    console.log(`Ended the scraping for ${searchTerm}!`);
+    await saveCommuneInfo(commune, neigborhoodIds);
+    console.log(`Ended the scraping for ${commune}!`);
   } catch (error) {
     console.log({ error });
   }

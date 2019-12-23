@@ -1,6 +1,6 @@
 import { PropertySpecs } from '../interfaces/helpers';
 
-const extractSpecs = (itemAttrs: string): PropertySpecs => {
+export const extractSpecs = (itemAttrs: string): PropertySpecs => {
   const specs = itemAttrs.split('|');
 
   // TODO: Verify if size, rooms or bathrooms are included in the info.
@@ -12,4 +12,9 @@ const extractSpecs = (itemAttrs: string): PropertySpecs => {
   }
 }
 
-export default extractSpecs;
+export const splitSeparatedFields = (fields: string, separator = ','): string[] => {
+  return fields
+    .split(separator)
+    .map(field => field.trim())
+    .filter(field => !!field);
+}
