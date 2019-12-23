@@ -16,11 +16,11 @@ export const createCommune = async (
       return commune._id;
     }
 
-    const newNeigborhood = new CommuneModel({name, neigborhoods});
-    newNeigborhood.save();
+    const newCommune = new CommuneModel({name, neigborhoods});
+    await newCommune.save();
 
     // eslint-disable-next-line no-underscore-dangle
-    return newNeigborhood._id;
+    return newCommune._id;
   } catch (error) {
     throw new Error(error.message);
   }
@@ -40,7 +40,7 @@ export const createNeigborhood = async (
     }
 
     const newNeigborhood = new NeigborhoodModel({slug, properties});
-    newNeigborhood.save();
+    await newNeigborhood.save();
 
     // eslint-disable-next-line no-underscore-dangle
     return newNeigborhood._id;
@@ -60,7 +60,7 @@ export const createProperty = async (property: Property): Promise<string> => {
     }
 
     const newProperty = new PropertyModel(property);
-    newProperty.save();
+    await newProperty.save();
 
     // eslint-disable-next-line no-underscore-dangle
     return newProperty._id;
