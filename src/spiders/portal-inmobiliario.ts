@@ -1,8 +1,16 @@
 import got from 'got';
-import { NeigborhoodUrl, NeigborhoodInfo, Property } from '../interfaces/portal-inmobiliario';
+import {
+  NeigborhoodUrl,
+  NeigborhoodInfo,
+  Property
+} from '../interfaces/portal-inmobiliario';
 import { extractSpecs } from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
-import { createProperty, createNeigborhood, createCommune } from '../utils/mongo';
+import {
+  createProperty,
+  createNeigborhood,
+  createCommune
+} from '../utils/mongo';
 
 // TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
@@ -17,10 +25,11 @@ const urlMap = {
 const getNeighborhoodUrl = async (
   neighborhoodId: string
 ): Promise<NeigborhoodUrl[]> => {
-  const { body: url } = await got.get(
-    `${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`,
-    { responseType: 'json' }
-  );
+  const {
+    body: url
+  } = await got.get(`${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`, {
+    responseType: 'json'
+  });
 
   return url;
 };
@@ -33,59 +42,85 @@ const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
 
 const scrapNeighborhood = async (
   slug: string,
-  nextPage?: string): Promise<NeigborhoodInfo> => {
+  nextPage?: string
+): Promise<NeigborhoodInfo> => {
   // TODO: Change this parameters to options setted outside of this function.
-  const url = nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${slug}`;
-  const { body } = await got.get(url);
-
-  const elements = await findDOMElement('.item__info-container', body).toArray();
-
-  const properties: Property[] = elements.map(element => {
-    const priceSymbol = findDOMElement('.price__symbol', element).text();
-    const priceFraction = findDOMElement('.price__fraction', element).text();
-    const itemAttrs = findDOMElement('.item__attrs', element).text();
-    const { href: link } = findDOMElement('.item__info-title-link', element).attr();
-    const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
-
-    return {
-      size,
-      rooms,
-      bathrooms,
-      price: Number(priceFraction.split('.').join('').replace(',', '.')),
-      priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
-      formattedPrice: `${priceSymbol} ${priceFraction}`,
-      description: findDOMElement('.main-title', element).text(),
-      link: link.split('#')[0],
-    }
-  });
-
   try {
-    const { href } = await findDOMElement('.prefetch', body).attr();
-    const { properties: nextPageData } = await scrapNeighborhood(slug, href);
+    const url =
+      nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${slug}`;
+    const { body } = await got.get(url);
 
-    return {
-      slug,
-      properties: [...properties, ...nextPageData],
+    const elements = await findDOMElement(
+      '.item__info-container',
+      body
+    ).toArray();
+
+    const properties: Property[] = elements.map(element => {
+      const priceSymbol = findDOMElement('.price__symbol', element).text();
+      const priceFraction = findDOMElement('.price__fraction', element).text();
+      const itemAttrs = findDOMElement('.item__attrs', element).text();
+      const { href: link } = findDOMElement(
+        '.item__info-title-link',
+        element
+      ).attr();
+      const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
+
+      return {
+        size,
+        rooms,
+        bathrooms,
+        price: Number(
+          priceFraction
+            .split('.')
+            .join('')
+            .replace(',', '.')
+        ),
+        priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
+        formattedPrice: `${priceSymbol} ${priceFraction}`,
+        description: findDOMElement('.main-title', element).text(),
+        link: link.split('#')[0]
+      };
+    });
+
+    try {
+      const { href } = await findDOMElement('.prefetch', body).attr();
+      const { properties: nextPageData } = await scrapNeighborhood(slug, href);
+
+      return {
+        slug,
+        properties: [...properties, ...nextPageData]
+      };
+    } catch (error) {
+      return {
+        slug,
+        properties
+      };
     }
   } catch (error) {
     return {
       slug,
-      properties,
+      properties: [],
     }
   }
 };
 
 const savePropertyInfo = (property: Property): Promise<string> => {
   return createProperty(property);
-}
+};
 
-const saveNeighborhoodInfo = (slug: string, propertiesIds: string[]): Promise<string> => {
+const saveNeighborhoodInfo = (
+  slug: string,
+  propertiesIds: string[]
+): Promise<string> => {
   return createNeigborhood(slug, propertiesIds);
-}
+};
 
-const saveCommuneInfo = (name: string, neighborhoodsIds: string[]): Promise<string> => {
+const saveCommuneInfo = (
+  name: string,
+  neighborhoodsIds: string[]
+): Promise<string> => {
   return createCommune(name, neighborhoodsIds);
-}
+};
 
 export default async (commune: string): Promise<void> => {
   try {
@@ -96,11 +131,11 @@ export default async (commune: string): Promise<void> => {
     const { body } = await got.get(url, { responseType: 'json' });
 
     const extractedNeighborhoods = body.filter(
-      (d: { level: string; }) => d.level === 'neighborhood'
+      (d: { level: string }) => d.level === 'neighborhood'
     );
 
     const neighborhoodURLs = await Promise.all(
-      extractedNeighborhoods.map((neighborhood: { id: string; }) =>
+      extractedNeighborhoods.map((neighborhood: { id: string }) =>
         getNeighborhoodUrl(neighborhood.id)
       )
     );
@@ -111,18 +146,23 @@ export default async (commune: string): Promise<void> => {
       neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
     );
 
-    const neigborhoodIds = await Promise.all(scraperInformation.map(async info => {
-      const { slug, properties } = info;
+    const neigborhoodIds = await Promise.all(
+      scraperInformation.map(async info => {
+        const { slug, properties } = info;
 
-      const propertiesIds = await Promise.all(properties.map(property =>
-        savePropertyInfo(property),
-      ));
+        const propertiesIds = await Promise.all(
+          properties.map(property => savePropertyInfo(property))
+        );
 
-      const propertiesIdsFiltered = propertiesIds.filter(id => !!id);
-      const neigborhoodId = await saveNeighborhoodInfo(slug, propertiesIdsFiltered);
+        const propertiesIdsFiltered = propertiesIds.filter(id => !!id);
+        const neigborhoodId = await saveNeighborhoodInfo(
+          slug,
+          propertiesIdsFiltered
+        );
 
-      return neigborhoodId;
-    }));
+        return neigborhoodId;
+      })
+    );
 
     await saveCommuneInfo(commune, neigborhoodIds);
     console.log(`Ended the scraping for ${commune}!`);
