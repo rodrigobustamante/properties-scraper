@@ -1,5 +1,5 @@
-import redis from 'redis';
+import Redis from 'ioredis';
 
-const redisClient = redis.createClient();
+const redisClient = new Redis({ lazyConnect: true });
 
 export default redisClient;

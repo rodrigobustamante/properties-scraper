@@ -1,6 +1,5 @@
 import got from 'got';
 import {
-  NeigborhoodUrl,
   NeigborhoodInfo,
   Property
 } from '../interfaces/portal-inmobiliario';
@@ -11,6 +10,7 @@ import {
   createNeigborhood,
   createCommune
 } from '../utils/mongo';
+import { getKey, setKey } from '../utils/redis';
 
 const baseUrl = 'https://www.portalinmobiliario.com';
 const urlMap = {
@@ -20,21 +20,28 @@ const urlMap = {
     '/api/search-faceted/MLC/search-real-estate-url?operation_id=arriendo_departamento&only_news=false&location_id='
 };
 
-// TODO: Save this information in Redis, to request the info once, and save it (is very strange if this info change).
 const getNeighborhoodUrl = async (
   neighborhoodId: string
-): Promise<NeigborhoodUrl[]> => {
-  const {
-    body: url
-  } = await got.get(`${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`, {
-    responseType: 'json'
-  });
+): Promise<string> => {
+  const neigborhoodUrl = await getKey(neighborhoodId);
 
-  return url;
+  if (!neigborhoodUrl) {
+    const {
+      body
+    } = await got.get(`${baseUrl}${urlMap.getLocationUrl}${neighborhoodId}`, {
+      responseType: 'json'
+    });
+
+    await setKey(neighborhoodId, body.url);
+
+    return body.url;
+  }
+
+  return neigborhoodUrl;
 };
 
-const getNeighborhoodsSlug = (neigborhoodsUrl: NeigborhoodUrl[]): string[] => {
-  return neigborhoodsUrl.map(({ url }) =>
+const getNeighborhoodsSlug = (neigborhoodsUrl: string[]): string[] => {
+  return neigborhoodsUrl.map((url) =>
     url.substring(url.lastIndexOf('/') + 1)
   );
 };
@@ -43,7 +50,6 @@ const scrapNeighborhood = async (
   slug: string,
   nextPage?: string
 ): Promise<NeigborhoodInfo> => {
-  // TODO: Change this parameters to options setted outside of this function.
   try {
     const url =
       nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${slug}`;
@@ -132,11 +138,14 @@ export default async (commune: string): Promise<void> => {
       (d: { level: string }) => d.level === 'neighborhood'
     );
 
-    const neighborhoodURLs = await Promise.all(
+    const neighborhoodURLs: string[] = await Promise.all(
       extractedNeighborhoods.map((neighborhood: { id: string }) =>
         getNeighborhoodUrl(neighborhood.id)
       )
     );
+
+    console.log({neighborhoodURLs});
+
 
     const neighborhoodSlugs = getNeighborhoodsSlug(neighborhoodURLs);
 

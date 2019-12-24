@@ -15,13 +15,14 @@ dotenv.config();
 
   try {
     await connectToDB();
+    await redisClient.connect();
 
     await Promise.all(communes.map(async commune => {
       await portalInmobiliario(commune);
     }));
 
-    redisClient.quit();
     await disconnectFromDB();
+    await redisClient.quit();
   } catch (error) {
     throw new Error(error.message);
   }
