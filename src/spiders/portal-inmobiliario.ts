@@ -12,9 +12,7 @@ import {
   createCommune
 } from '../utils/mongo';
 
-// TODO: transform in env variable
 const baseUrl = 'https://www.portalinmobiliario.com';
-// searchTerm should be defined on index file??
 const urlMap = {
   searchLocations: '/api/search-faceted/MLC/locations?query=',
   // TODO: Pass values to operation_id and only_news options.
@@ -22,6 +20,7 @@ const urlMap = {
     '/api/search-faceted/MLC/search-real-estate-url?operation_id=arriendo_departamento&only_news=false&location_id='
 };
 
+// TODO: Save this information in Redis, to request the info once, and save it (is very strange if this info change).
 const getNeighborhoodUrl = async (
   neighborhoodId: string
 ): Promise<NeigborhoodUrl[]> => {
@@ -127,7 +126,6 @@ export default async (commune: string): Promise<void> => {
     console.log(`Scraping info for ${commune}`);
 
     const url = `${baseUrl}${urlMap.searchLocations}${encodeURI(commune)}`;
-
     const { body } = await got.get(url, { responseType: 'json' });
 
     const extractedNeighborhoods = body.filter(
@@ -154,10 +152,9 @@ export default async (commune: string): Promise<void> => {
           properties.map(property => savePropertyInfo(property))
         );
 
-        const propertiesIdsFiltered = propertiesIds.filter(id => !!id);
         const neigborhoodId = await saveNeighborhoodInfo(
           slug,
-          propertiesIdsFiltered
+          propertiesIds
         );
 
         return neigborhoodId;
