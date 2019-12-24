@@ -144,9 +144,6 @@ export default async (commune: string): Promise<void> => {
       )
     );
 
-    console.log({neighborhoodURLs});
-
-
     const neighborhoodSlugs = getNeighborhoodsSlug(neighborhoodURLs);
 
     const scraperInformation = await Promise.all(
