@@ -11,6 +11,7 @@ import {
   createCommune
 } from '../utils/mongo';
 import { getKey, setKey } from '../utils/redis';
+// import transformUFToCLP from '../utils/uf';
 
 const baseUrl = 'https://www.portalinmobiliario.com';
 const urlMap = {
@@ -64,26 +65,23 @@ const scrapNeighborhood = async (
       const priceSymbol = findDOMElement('.price__symbol', element).text();
       const priceFraction = findDOMElement('.price__fraction', element).text();
       const itemAttrs = findDOMElement('.item__attrs', element).text();
-      const { href: link } = findDOMElement(
+      const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
+      const priceToNumber = Number(priceFraction.split('.').join('').replace(',', '.'));
+      // const price = priceSymbol === 'UF' ? (await transformUFToCLP(priceToNumber)) : priceToNumber;
+      const { href } = findDOMElement(
         '.item__info-title-link',
         element
       ).attr();
-      const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
 
       return {
         size,
         rooms,
         bathrooms,
-        price: Number(
-          priceFraction
-            .split('.')
-            .join('')
-            .replace(',', '.')
-        ),
+        price: priceToNumber,
         priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
         formattedPrice: `${priceSymbol} ${priceFraction}`,
         description: findDOMElement('.main-title', element).text(),
-        link: link.split('#')[0]
+        link: href.split('#')[0]
       };
     });
 
