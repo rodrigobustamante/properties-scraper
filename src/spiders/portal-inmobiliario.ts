@@ -11,7 +11,7 @@ import {
   createCommune
 } from '../utils/mongo';
 import { getKey, setKey } from '../utils/redis';
-// import transformUFToCLP from '../utils/uf';
+import transformUFToCLP from '../utils/uf';
 
 const baseUrl = 'https://www.portalinmobiliario.com';
 const urlMap = {
@@ -67,7 +67,6 @@ const scrapNeighborhood = async (
       const itemAttrs = findDOMElement('.item__attrs', element).text();
       const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
       const priceToNumber = Number(priceFraction.split('.').join('').replace(',', '.'));
-      // const price = priceSymbol === 'UF' ? (await transformUFToCLP(priceToNumber)) : priceToNumber;
       const { href } = findDOMElement(
         '.item__info-title-link',
         element
@@ -153,7 +152,14 @@ export default async (commune: string): Promise<void> => {
         const { slug, properties } = info;
 
         const propertiesIds = await Promise.all(
-          properties.map(property => savePropertyInfo(property))
+          properties.map(async property => {
+            if (property.priceCurrency !== 'UF') {
+              return savePropertyInfo(property);
+            }
+
+            const p = {...property, price: (await transformUFToCLP(property.price))}
+            return savePropertyInfo(p);
+          }),
         );
 
         const neigborhoodId = await saveNeighborhoodInfo(
