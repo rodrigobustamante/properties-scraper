@@ -16,10 +16,10 @@ export interface NeigborhoodInfo {
 export interface Property {
   formattedPrice: string,
   priceCurrency: string,
-  bathrooms: string,
+  bathrooms: number,
   price: number,
-  size: string,
-  rooms: string,
+  size: number,
+  rooms: number,
   description: string,
   link?: string,
 }

@@ -1,13 +1,14 @@
 import { PropertySpecs } from '../interfaces/helpers';
 
-const extractNumbersOfString = (str: string): string => {
+const extractNumbersOfString = (str: string): number => {
   if (!str) return null;
 
   const matched = str.match(/\d+/g)
 
   if (!matched) return null;
 
-  return str.match(/\d+/g).map(Number).join('');
+  const formattedMatch = str.match(/\d+/g).map(Number).join('');
+  return Number(formattedMatch);
 }
 
 export const extractSpecs = (itemAttrs: string): PropertySpecs => {
