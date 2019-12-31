@@ -14,7 +14,6 @@ export interface NeigborhoodInfo {
 }
 
 export interface Property {
-  formattedPrice: string,
   priceCurrency: string,
   bathrooms: number,
   price: number,
