@@ -1,49 +1,25 @@
 import CommuneModel from '../models/commune';
-import NeigborhoodModel from '../models/neigborhood';
 import PropertyModel from '../models/property';
 import { Property } from '../interfaces/portal-inmobiliario';
 
 export const createCommune = async (
   name: string,
-  neigborhoods: string[]
+  properties: string[]
 ): Promise<string> => {
   try {
     const commune = await CommuneModel.findOne({name});
 
     if (commune) {
-      await commune.updateOne({name, neigborhoods});
+      await commune.updateOne({name, properties});
       // eslint-disable-next-line no-underscore-dangle
       return commune._id;
     }
 
-    const newCommune = new CommuneModel({name, neigborhoods});
+    const newCommune = new CommuneModel({name, properties});
     await newCommune.save();
 
     // eslint-disable-next-line no-underscore-dangle
     return newCommune._id;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-export const createNeigborhood = async (
-  slug: string,
-  properties: string[]
-): Promise<string> => {
-  try {
-    const neigborhood = await NeigborhoodModel.findOne({slug});
-
-    if (neigborhood) {
-      await neigborhood.updateOne({slug, properties});
-      // eslint-disable-next-line no-underscore-dangle
-      return neigborhood._id;
-    }
-
-    const newNeigborhood = new NeigborhoodModel({slug, properties});
-    await newNeigborhood.save();
-
-    // eslint-disable-next-line no-underscore-dangle
-    return newNeigborhood._id;
   } catch (error) {
     throw new Error(error.message);
   }

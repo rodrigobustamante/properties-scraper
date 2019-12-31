@@ -1,6 +1,5 @@
 import Mongoose from 'mongoose';
 
-require('../models/neigborhood');
 require('../models/property');
 
 export const connectToDB = async (): Promise<void> => {

@@ -2,7 +2,7 @@ import Mongoose from 'mongoose';
 
 const CommuneSchema = new Mongoose.Schema({
   name: { required: true, type: String },
-  neigborhoods: [{type: Mongoose.Schema.Types.ObjectId, ref: 'Neigborhood'}]
+  properties: [{type: Mongoose.Schema.Types.ObjectId, ref: 'Property'}]
 });
 
 export default Mongoose.model('Commune', CommuneSchema);
