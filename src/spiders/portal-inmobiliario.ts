@@ -1,4 +1,5 @@
 import got from 'got';
+import { flattenDeep } from 'lodash';
 import {
   NeigborhoodInfo,
   Property
@@ -7,7 +8,6 @@ import { extractSpecs } from '../utils/helpers';
 import findDOMElement from '../utils/cheerio';
 import {
   createProperty,
-  createNeigborhood,
   createCommune
 } from '../utils/mongo';
 import { getKey, setKey } from '../utils/redis';
@@ -53,7 +53,7 @@ const scrapNeighborhood = async (
 ): Promise<NeigborhoodInfo> => {
   try {
     const url =
-      nextPage || `${baseUrl}/arriendo/departamento/1-dormitorio/${slug}`;
+      nextPage || `${baseUrl}/arriendo/departamento/${slug}`;
     const { body } = await got.get(url);
 
     const elements = await findDOMElement(
@@ -63,7 +63,9 @@ const scrapNeighborhood = async (
 
     const properties: Property[] = elements.map(element => {
       const priceSymbol = findDOMElement('.price__symbol', element).text();
-      const priceFraction = findDOMElement('.price__fraction', element).text();
+      const priceFraction = findDOMElement('.price__fraction', element).text()
+        || findDOMElement('.price__clf-full', element).text();
+
       const itemAttrs = findDOMElement('.item__attrs', element).text();
       const { size, rooms, bathrooms } = extractSpecs(itemAttrs);
       const priceToNumber = Number(priceFraction.split('.').join('').replace(',', '.'));
@@ -78,7 +80,6 @@ const scrapNeighborhood = async (
         bathrooms,
         price: priceToNumber,
         priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
-        formattedPrice: `${priceSymbol} ${priceFraction}`,
         description: findDOMElement('.main-title', element).text(),
         link: href.split('#')[0]
       };
@@ -110,18 +111,11 @@ const savePropertyInfo = (property: Property): Promise<string> => {
   return createProperty(property);
 };
 
-const saveNeighborhoodInfo = (
-  slug: string,
-  propertiesIds: string[]
-): Promise<string> => {
-  return createNeigborhood(slug, propertiesIds);
-};
-
 const saveCommuneInfo = (
   name: string,
-  neighborhoodsIds: string[]
+  propertiesIds: string[]
 ): Promise<string> => {
-  return createCommune(name, neighborhoodsIds);
+  return createCommune(name, propertiesIds);
 };
 
 export default async (commune: string): Promise<void> => {
@@ -147,11 +141,11 @@ export default async (commune: string): Promise<void> => {
       neighborhoodSlugs.map(slug => scrapNeighborhood(slug))
     );
 
-    const neigborhoodIds = await Promise.all(
+    const propertiesIds = await Promise.all(
       scraperInformation.map(async info => {
-        const { slug, properties } = info;
+        const { properties } = info;
 
-        const propertiesIds = await Promise.all(
+        const pIds = await Promise.all(
           properties.map(async property => {
             if (property.priceCurrency !== 'UF') {
               return savePropertyInfo(property);
@@ -162,16 +156,16 @@ export default async (commune: string): Promise<void> => {
           }),
         );
 
-        const neigborhoodId = await saveNeighborhoodInfo(
-          slug,
-          propertiesIds
-        );
-
-        return neigborhoodId;
-      })
+        return pIds;
+      }),
     );
 
-    await saveCommuneInfo(commune, neigborhoodIds);
+
+
+    const flattedPropertiesIds: string[] = flattenDeep(propertiesIds);
+    console.log({propertiesIds, flattedPropertiesIds});
+
+    await saveCommuneInfo(commune, flattedPropertiesIds);
     console.log(`Ended the scraping for ${commune}!`);
   } catch (error) {
     console.log({ error });
