@@ -113,9 +113,10 @@ const savePropertyInfo = (property: Property): Promise<string> => {
 
 const saveCommuneInfo = (
   name: string,
+  portal: string,
   propertiesIds: string[]
 ): Promise<string> => {
-  return createCommune(name, propertiesIds);
+  return createCommune(name, portal, propertiesIds);
 };
 
 export default async (commune: string): Promise<void> => {
@@ -160,12 +161,8 @@ export default async (commune: string): Promise<void> => {
       }),
     );
 
-
-
     const flattedPropertiesIds: string[] = flattenDeep(propertiesIds);
-    console.log({propertiesIds, flattedPropertiesIds});
-
-    await saveCommuneInfo(commune, flattedPropertiesIds);
+    await saveCommuneInfo(commune, 'PortalInmobiliario', flattedPropertiesIds);
     console.log(`Ended the scraping for ${commune}!`);
   } catch (error) {
     console.log({ error });

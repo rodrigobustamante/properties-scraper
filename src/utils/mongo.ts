@@ -4,18 +4,19 @@ import { Property } from '../interfaces/portal-inmobiliario';
 
 export const createCommune = async (
   name: string,
+  portal: string,
   properties: string[]
 ): Promise<string> => {
   try {
-    const commune = await CommuneModel.findOne({name});
+    const commune = await CommuneModel.findOne({name, portal});
 
     if (commune) {
-      await commune.updateOne({name, properties});
+      await commune.updateOne({properties});
       // eslint-disable-next-line no-underscore-dangle
       return commune._id;
     }
 
-    const newCommune = new CommuneModel({name, properties});
+    const newCommune = new CommuneModel({name, portal, properties});
     await newCommune.save();
 
     // eslint-disable-next-line no-underscore-dangle
