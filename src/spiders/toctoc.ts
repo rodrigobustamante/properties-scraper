@@ -1,5 +1,6 @@
 import got from 'got';
-import { SearchCommuneResponse, CommuneInfo } from '../interfaces/toctoc';
+import { SearchCommuneResponse, CommuneInfo, Property } from '../interfaces/toctoc';
+import { createProperty, createCommune } from '../utils/mongo';
 
 const baseURL = 'https://www.toctoc.com/api';
 const urlMap = {
@@ -18,17 +19,17 @@ const processSearchCommuneResponse = (body: SearchCommuneResponse): CommuneInfo 
 
   const [firstSuggestion] = suggestions.options;
 
-  if(!firstSuggestion) return null;
+  if (!firstSuggestion) return null;
 
-  const { _id: id, _source } = firstSuggestion;
+  const { _source } = firstSuggestion;
 
   if (!_source.suggest.length) return null;
 
-  const { suggest, Texto: label } = _source;
+  const { suggest, Texto: label, IdInterno: id } = _source;
   const { input: name } = suggest[0];
 
   return {
-    id: Number(id),
+    id,
     name,
     label,
   }
@@ -58,27 +59,53 @@ const getCommuneId = async (communeName: string): Promise<CommuneInfo> => {
   }
 }
 
-// const processPropertyInfo
+const processPropertyInfo = (dataToTransform: Array<any>): Property => (
+  {
+    size: dataToTransform[34],
+    description: dataToTransform[39],
+    price: dataToTransform[22],
+    link: dataToTransform[40],
+    bathrooms: dataToTransform[4],
+    rooms: dataToTransform[8],
+  }
+);
 
-export default async (commune: string): Promise<any> => {
+const savePropertyInfo = (property: Property): Promise<string> => {
+  return createProperty(property);
+};
+
+const saveCommuneInfo = (
+  name: string,
+  portal: string,
+  propertiesIds: string[]
+): Promise<string> => {
+  return createCommune(name, portal, propertiesIds);
+};
+
+export default async (commune: string): Promise<void> => {
+  console.log(`Started the scraping for ${commune} in TocToc!`);
   const communeInfo = await getCommuneId(commune);
 
   if (!communeInfo) return null;
 
   const { id, name, label } = communeInfo;
 
-
   const toctocAccessToken = process.env.TOCTOC_ACCESS_TOKEN;
-  const payload = { 'tipoVista': 'lista', 'idPoligono': id, 'moneda': 2, 'tipoPropiedad': 'departamento', 'busqueda': label, 'limite': 10000 };
+  const payload = { 'tipoVista': 'lista', 'idPoligono': id, 'moneda': 2, 'operacion': 2, 'tipoPropiedad': 'departamento', 'busqueda': label, 'limite': 10000 };
   const headers = { 'x-access-token': toctocAccessToken, 'Content-Type': 'application/json' };
 
   try {
     const { body } = await got.post(urlMap.getProperties, { headers, body: JSON.stringify(payload), responseType: 'json' });
+    const { Propiedades: properties } = body.resultados;
 
+    const hydratedProperties = properties.map(property => processPropertyInfo(property));
+    const propertiesIds: string[] = await Promise.all(hydratedProperties.map(
+      (property: Property) => savePropertyInfo(property)
+    ));
 
-    return body.resultados.Propiedades;
+    await saveCommuneInfo(name, 'TocToc', propertiesIds);
+    console.log(`Ended the scraping for ${commune} in TocToc!`);
   } catch (error) {
-    console.log({ error });
     throw new Error(error.message);
   }
 };

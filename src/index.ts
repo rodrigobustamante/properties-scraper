@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import portalInmobiliario from './spiders/portal-inmobiliario';
+import toctoc from './spiders/toctoc';
 import { connectToDB, disconnectFromDB } from './services/mongo';
 import redisClient from './services/redis';
 import { splitSeparatedFields } from './utils/helpers';
@@ -19,6 +20,7 @@ dotenv.config();
 
     await Promise.all(communes.map(async commune => {
       await portalInmobiliario(commune);
+      await toctoc(commune);
     }));
 
     await disconnectFromDB();

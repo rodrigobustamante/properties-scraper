@@ -8,6 +8,15 @@ export interface SearchCommuneResponse {
   suggest: Suggest
 }
 
+export interface Property {
+  price: number,
+  size: number,
+  bathrooms: number,
+  rooms: number,
+  link: string,
+  description: string,
+}
+
 interface Suggest {
   autocompletesuggest: AutocompleteSuggestion[]
 }
