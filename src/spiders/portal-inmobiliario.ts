@@ -121,7 +121,7 @@ const saveCommuneInfo = (
 
 export default async (commune: string): Promise<void> => {
   try {
-    console.log(`Scraping info for ${commune}`);
+    console.log(`Scraping info for ${commune} in Portal Inmobiliario`);
 
     const url = `${baseUrl}${urlMap.searchLocations}${encodeURI(commune)}`;
     const { body } = await got.get(url, { responseType: 'json' });
@@ -163,7 +163,7 @@ export default async (commune: string): Promise<void> => {
 
     const flattedPropertiesIds: string[] = flattenDeep(propertiesIds);
     await saveCommuneInfo(commune, 'PortalInmobiliario', flattedPropertiesIds);
-    console.log(`Ended the scraping for ${commune}!`);
+    console.log(`Ended the scraping for ${commune} in Portal Inmobiliario!`);
   } catch (error) {
     console.log({ error });
   }

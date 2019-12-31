@@ -14,11 +14,11 @@ export interface NeigborhoodInfo {
 }
 
 export interface Property {
-  priceCurrency: string,
+  priceCurrency?: string,
   bathrooms: number,
   price: number,
   size: number,
   rooms: number,
   description: string,
-  link?: string,
+  link: string,
 }
