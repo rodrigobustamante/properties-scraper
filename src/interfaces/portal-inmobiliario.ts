@@ -21,4 +21,5 @@ export interface Property {
   rooms: number,
   description: string,
   link: string,
+  portal: string,
 }

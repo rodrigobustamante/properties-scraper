@@ -7,6 +7,7 @@ const PropertySchema = new Mongoose.Schema({
   rooms: { required: false, type: Number},
   description: { required: true, type: String},
   link: { required: false, type: String},
+  portal: { required: true, type: String},
 });
 
 export default Mongoose.model('Property', PropertySchema);

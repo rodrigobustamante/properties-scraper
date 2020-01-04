@@ -81,7 +81,8 @@ const scrapNeighborhood = async (
         price: priceToNumber,
         priceCurrency: priceSymbol === '$' ? 'CLP' : priceSymbol,
         description: findDOMElement('.main-title', element).text(),
-        link: href.split('#')[0]
+        link: href.split('#')[0],
+        portal: 'Portal Inmobiliario',
       };
     });
 
@@ -113,10 +114,9 @@ const savePropertyInfo = (property: Property): Promise<string> => {
 
 const saveCommuneInfo = (
   name: string,
-  portal: string,
   propertiesIds: string[]
 ): Promise<string> => {
-  return createCommune(name, portal, propertiesIds);
+  return createCommune(name, propertiesIds);
 };
 
 export default async (commune: string): Promise<void> => {
@@ -162,7 +162,7 @@ export default async (commune: string): Promise<void> => {
     );
 
     const flattedPropertiesIds: string[] = flattenDeep(propertiesIds);
-    await saveCommuneInfo(commune, 'PortalInmobiliario', flattedPropertiesIds);
+    await saveCommuneInfo(commune, flattedPropertiesIds);
     console.log(`Ended the scraping for ${commune} in Portal Inmobiliario!`);
   } catch (error) {
     console.log({ error });

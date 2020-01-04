@@ -15,6 +15,7 @@ export interface Property {
   rooms: number,
   link: string,
   description: string,
+  portal: string,
 }
 
 interface Suggest {

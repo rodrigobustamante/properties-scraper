@@ -67,6 +67,7 @@ const processPropertyInfo = (dataToTransform: Array<any>): Property => (
     link: dataToTransform[40],
     bathrooms: dataToTransform[4],
     rooms: dataToTransform[8],
+    portal: 'TocToc',
   }
 );
 
@@ -79,7 +80,7 @@ const saveCommuneInfo = (
   portal: string,
   propertiesIds: string[]
 ): Promise<string> => {
-  return createCommune(name, portal, propertiesIds);
+  return createCommune(name, propertiesIds);
 };
 
 export default async (commune: string): Promise<void> => {
