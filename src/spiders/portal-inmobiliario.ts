@@ -165,6 +165,6 @@ export default async (commune: string): Promise<void> => {
     await saveCommuneInfo(commune, flattedPropertiesIds);
     console.log(`Ended the scraping for ${commune} in Portal Inmobiliario!`);
   } catch (error) {
-    console.log({ error });
+    throw new Error(error.message);
   }
 };
