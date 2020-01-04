@@ -25,17 +25,16 @@ const processSearchCommuneResponse = (body: SearchCommuneResponse): CommuneInfo 
 
   if (!_source.suggest.length) return null;
 
-  const { suggest, Texto: label, IdInterno: id } = _source;
-  const { input: name } = suggest[0];
+  const { Texto: label, IdInterno: id } = _source;
 
   return {
     id,
-    name,
+    name: label.split(',')[0],
     label,
   }
 }
 
-const getCommuneId = async (communeName: string): Promise<CommuneInfo> => {
+const getCommune = async (communeName: string): Promise<CommuneInfo> => {
   try {
     const payload = {
       suggest: {
@@ -77,7 +76,6 @@ const savePropertyInfo = (property: Property): Promise<string> => {
 
 const saveCommuneInfo = (
   name: string,
-  portal: string,
   propertiesIds: string[]
 ): Promise<string> => {
   return createCommune(name, propertiesIds);
@@ -85,7 +83,7 @@ const saveCommuneInfo = (
 
 export default async (commune: string): Promise<void> => {
   console.log(`Started the scraping for ${commune} in TocToc!`);
-  const communeInfo = await getCommuneId(commune);
+  const communeInfo = await getCommune(commune);
 
   if (!communeInfo) return null;
 
@@ -104,7 +102,7 @@ export default async (commune: string): Promise<void> => {
       (property: Property) => savePropertyInfo(property)
     ));
 
-    await saveCommuneInfo(name, 'TocToc', propertiesIds);
+    await saveCommuneInfo(name, propertiesIds);
     console.log(`Ended the scraping for ${commune} in TocToc!`);
   } catch (error) {
     throw new Error(error.message);
