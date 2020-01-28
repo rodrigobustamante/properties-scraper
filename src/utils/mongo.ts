@@ -40,6 +40,9 @@ export const createProperty = async (property: Property): Promise<string> => {
       return p._id;
     }
 
+    // eslint-disable-next-line no-param-reassign
+    property.createdAt = new Date();
+
     const newProperty = new PropertyModel(property);
     await newProperty.save();
 
