@@ -8,6 +8,7 @@ const PropertySchema = new Mongoose.Schema({
   description: { required: true, type: String},
   link: { required: false, type: String},
   portal: { required: true, type: String},
+  createdAt: { required: true, type: Date },
 });
 
 export default Mongoose.model('Property', PropertySchema);

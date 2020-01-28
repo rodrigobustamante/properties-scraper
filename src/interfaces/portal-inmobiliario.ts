@@ -22,4 +22,5 @@ export interface Property {
   description: string,
   link: string,
   portal: string,
+  createdAt?: Date,
 }
